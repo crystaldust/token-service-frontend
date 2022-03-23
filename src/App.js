@@ -7,6 +7,13 @@ import { Alert, Box, Button, Collapse, Grid, IconButton } from "@mui/material";
 import { Stack } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
+const TOKEN_REG = /ghp_[0-9A-Za-z]{36}/;
+
+let URL_BASE = "";
+if (process.env.NODE_ENV === "development") {
+  URL_BASE = process.env.REACT_APP_DEBUG_URL_BASE;
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -19,17 +26,25 @@ class App extends React.Component {
       alertVariant: "outlined",
     };
     this.submitTokens = this.submitTokens.bind(this);
+    this.setAlert = this.setAlert.bind(this);
     this.tokenInputComponent = createRef();
     this.accountInputComponent = React.createRef();
   }
 
+  setAlert(alertOpen, alertText, alertSeverity, alertVariant) {
+    this.setState({
+      alertOpen,
+      alertText,
+      alertSeverity,
+      alertVariant,
+    });
+  }
+
   componentDidMount() {
     // TODO Replace with relative path
-    fetch("http://192.168.8.20:8000/tokens/list")
+    fetch(`${URL_BASE}/tokens/list`)
       .then((res) => res.json())
       .then((tokenList) => {
-        // this.setState({ data: tokenList });
-
         let accounts = new Set();
         tokenList.forEach((token) => {
           accounts.add(token.account);
@@ -42,22 +57,20 @@ class App extends React.Component {
     const tokens = this.tokenInputComponent.current.state.tokens;
     let payload = [];
     if (!this.accountInputComponent.current.state.value) {
-      this.setState({
-        alertOpen: true,
-        alertText: "account is empty",
-        alertSeverity: "error",
-        alertVariant: "filled",
-      });
+      this.setAlert(true, "account is empty", "error", "filled");
       return;
     }
     if (tokens.length === 0) {
-      this.setState({
-        alertOpen: true,
-        alertText: "tokens is empty",
-        alertSeverity: "error",
-        alertVariant: "filled",
-      });
+      this.setAlert(true, "tokens is empty", "error", "filled");
       return;
+    }
+
+    for (let i = 0; i < tokens.length; i++) {
+      let token = tokens[i];
+      if (!TOKEN_REG.exec(token)) {
+        this.setAlert(true, `Invalid token: ${token}`, "error", "filled");
+        return;
+      }
     }
 
     tokens.forEach((token) => {
@@ -68,7 +81,7 @@ class App extends React.Component {
         status: "available",
       });
     });
-    fetch("http://192.168.8.20:8000/tokens/upload", {
+    fetch(`${URL_BASE}/tokens/upload`, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -85,12 +98,7 @@ class App extends React.Component {
           alertVariant = "filled";
           alertSeverity = "error";
         }
-        this.setState({
-          alertOpen: true,
-          alertText,
-          alertVariant,
-          alertSeverity,
-        });
+        this.setAlert(true, alertText, alertSeverity, alertVariant);
       });
   }
 
@@ -140,7 +148,7 @@ class App extends React.Component {
             </Stack>
           </Grid>
           <Grid item xs={5}>
-            <TokenTable tokens={this.state.data}></TokenTable>
+            <TokenTable tokens={this.state.data} />
           </Grid>
         </Grid>
       </Stack>
