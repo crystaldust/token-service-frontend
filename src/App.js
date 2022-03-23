@@ -75,7 +75,7 @@ class App extends React.Component {
 
     tokens.forEach((token) => {
       payload.push({
-        account: this.accountInputComponent.current.state.value,
+        account: this.accountInputComponent.current.state.value.trim(),
         token,
         limit: 5000,
         status: "available",
