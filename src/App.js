@@ -7,6 +7,8 @@ import { Alert, Box, Button, Collapse, Grid, IconButton } from "@mui/material";
 import { Stack } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
+import { saveAs } from "file-saver";
+
 const TOKEN_REG = /ghp_[0-9A-Za-z]{36}/;
 
 let URL_BASE = "";
@@ -27,6 +29,7 @@ class App extends React.Component {
     };
     this.submitTokens = this.submitTokens.bind(this);
     this.setAlert = this.setAlert.bind(this);
+    this.exportTokens = this.exportTokens.bind(this);
     this.tokenInputComponent = createRef();
     this.accountInputComponent = React.createRef();
   }
@@ -51,6 +54,19 @@ class App extends React.Component {
         });
         this.setState({ accounts: Array.from(accounts), data: tokenList });
       });
+  }
+
+  exportTokens() {
+    let tokens = [];
+    this.state.data.forEach((item) => {
+      if (item.status === "available") {
+        tokens.push(item.token);
+      }
+    });
+    let tokensBlob = new Blob([JSON.stringify(tokens, null, 4)], {
+      type: "text/json;charset=utf-8",
+    });
+    saveAs(tokensBlob, "tokens.json");
   }
 
   submitTokens() {
@@ -149,6 +165,9 @@ class App extends React.Component {
           </Grid>
           <Grid item xs={5}>
             <TokenTable tokens={this.state.data} />
+            <Button variant="outlined" onClick={this.exportTokens}>
+              Export valid tokens
+            </Button>
           </Grid>
         </Grid>
       </Stack>
