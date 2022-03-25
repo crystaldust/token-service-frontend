@@ -6,6 +6,8 @@ import TokenTable from "./components/TokenTable";
 import { Alert, Box, Button, Collapse, Grid, IconButton } from "@mui/material";
 import { Stack } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import LoadingButton from "@mui/lab/LoadingButton";
+import SaveIcon from "@mui/icons-material/Save";
 
 import { saveAs } from "file-saver";
 
@@ -26,6 +28,8 @@ class App extends React.Component {
       alertText: "",
       alertSeverity: "info",
       alertVariant: "outlined",
+      loading: true,
+      loadingText: "Loading Tokens",
     };
     this.submitTokens = this.submitTokens.bind(this);
     this.setAlert = this.setAlert.bind(this);
@@ -52,7 +56,11 @@ class App extends React.Component {
         tokenList.forEach((token) => {
           accounts.add(token.account);
         });
-        this.setState({ accounts: Array.from(accounts), data: tokenList });
+        this.setState({
+          accounts: Array.from(accounts),
+          data: tokenList,
+          loading: false,
+        });
       });
   }
 
@@ -88,7 +96,6 @@ class App extends React.Component {
         return;
       }
     }
-
     tokens.forEach((token) => {
       payload.push({
         account: this.accountInputComponent.current.state.value.trim(),
@@ -97,6 +104,7 @@ class App extends React.Component {
         status: "available",
       });
     });
+    this.setState({ loading: true, loadingText: "Uploading Tokens" });
     fetch(`${URL_BASE}/tokens/upload`, {
       headers: {
         "Content-Type": "application/json",
@@ -115,6 +123,7 @@ class App extends React.Component {
           alertSeverity = "error";
         }
         this.setAlert(true, alertText, alertSeverity, alertVariant);
+        this.setState({ loading: false });
 
         const account = this.accountInputComponent.current.state.value.trim();
         if (resJson.num_inserted) {
@@ -182,9 +191,19 @@ class App extends React.Component {
           </Grid>
           <Grid item xs={5}>
             <TokenTable tokens={this.state.data} />
-            <Button variant="outlined" onClick={this.exportTokens}>
-              Export valid tokens
-            </Button>
+            <LoadingButton
+              size="small"
+              color="secondary"
+              onClick={this.exportTokens}
+              loading={this.state.loading}
+              loadingPosition="start"
+              startIcon={<SaveIcon />}
+              variant="contained"
+            >
+              {this.state.loading
+                ? this.state.loadingText
+                : "Export Valid Tokens"}
+            </LoadingButton>
           </Grid>
         </Grid>
       </Stack>
