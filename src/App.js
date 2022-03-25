@@ -115,6 +115,23 @@ class App extends React.Component {
           alertSeverity = "error";
         }
         this.setAlert(true, alertText, alertSeverity, alertVariant);
+
+        const account = this.accountInputComponent.current.state.value.trim();
+        if (resJson.num_inserted) {
+          let _tokens = this.state.data.concat();
+          resJson.inserted.forEach((token) => {
+            _tokens.push({
+              token,
+              account,
+              limit: 5000,
+              status: "available",
+            });
+          });
+
+          let _accounts = new Set(this.state.accounts);
+          _accounts.add(account);
+          this.setState({ accounts: Array.from(_accounts), data: _tokens });
+        }
       });
   }
 
